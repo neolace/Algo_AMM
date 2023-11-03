@@ -1,4 +1,5 @@
 """ example of the contract lifetime """
+
 from amm.create_asset import create_asset
 from amm.amm_api import create_amm_app, setup_amm_app, opt_in_to_pool_token, \
     supply, swap
@@ -32,8 +33,7 @@ poolToken = Tokens['pool_token_key']
 yesToken = Tokens['yes_token_key']
 noToken = Tokens['no_token_key']
 
-print(Tokens['pool_token_key'], Tokens['yes_token_key'], Tokens['no_token_key'])
-
+print(poolToken, yesToken, noToken)
 opt_in_to_pool_token(client, creator, private_key, poolToken)
 opt_in_to_pool_token(client, creator, private_key, yesToken)
 opt_in_to_pool_token(client, creator, private_key, noToken)
