@@ -24,7 +24,7 @@ def get_setup():
     pool_tokens_outstanding = App.globalGetEx(
         Global.current_application_id(), POOL_TOKENS_OUTSTANDING_KEY
     )
-    on_setup = Seq(
+    return Seq(
         pool_token_id,
         pool_tokens_outstanding,
         Assert(Not(pool_token_id.hasValue())),
@@ -37,19 +37,18 @@ def get_setup():
         opt_in(YES_TOKEN_KEY),
         Approve(),
     )
-    return on_setup
 
 def get_supply():
     """liquidity supply"""
     token_txn_index = Txn.group_index() - Int(1)
 
-    on_supply = Seq(
+    return Seq(
         Assert(
             And(
                 validate_token_received(token_txn_index, TOKEN_FUNDING_KEY),
                 Gtxn[token_txn_index].asset_amount()
                 >= App.globalGet(MIN_INCREMENT_KEY),
-           )
+            )
         ),
         mint_and_send_pool_token(
             Txn.sender(),
@@ -57,14 +56,13 @@ def get_supply():
         ),
         Approve(),
     )
-    return on_supply
 
 
 def get_swap():
     """option swap"""
     token_txn_index = Txn.group_index() - Int(1)
     option = Txn.application_args[1]
-    on_swap = Seq(
+    return Seq(
         Assert(
             validate_token_received(token_txn_index, TOKEN_FUNDING_KEY),
         ),
@@ -75,7 +73,7 @@ def get_swap():
                     Txn.sender(),
                     Gtxn[token_txn_index].asset_amount(),
                 ),
-                Approve()
+                Approve(),
             ),
         )
         .ElseIf(option == Bytes("buy_no"))
@@ -85,20 +83,18 @@ def get_swap():
                     Txn.sender(),
                     Gtxn[token_txn_index].asset_amount(),
                 ),
-                Approve()
+                Approve(),
             ),
         ),
-        Reject()
-        )
-
-    return on_swap
+        Reject(),
+    )
 
 
 def get_withdraw():
     """liquidity withdrawal"""
     pool_token_txn_index = Txn.group_index() - Int(1)
 
-    on_withdraw = Seq(
+    return Seq(
         Assert(
             validate_token_received(pool_token_txn_index, POOL_TOKEN_KEY),
         ),
@@ -109,45 +105,32 @@ def get_withdraw():
         Approve(),
     )
 
-    return on_withdraw
-
 
 def get_result():
     """sets result"""
     result = Txn.application_args[1]
 
-    on_result = Seq(
-        Assert(
-            Txn.sender() == App.globalGet(CREATOR_KEY)
-        ),
-
+    return Seq(
+        Assert(Txn.sender() == App.globalGet(CREATOR_KEY)),
         If(result == Bytes("yes"))
         .Then(
-            Seq(
-                App.globalPut(RESULT, App.globalGet(YES_TOKEN_KEY)),
-                Approve()
-            )
+            Seq(App.globalPut(RESULT, App.globalGet(YES_TOKEN_KEY)), Approve())
         )
         .ElseIf(
-                result == Bytes("no"),
-            )
+            result == Bytes("no"),
+        )
         .Then(
-            Seq(
-                App.globalPut(RESULT, App.globalGet(NO_TOKEN_KEY)),
-                Approve()
-            )
+            Seq(App.globalPut(RESULT, App.globalGet(NO_TOKEN_KEY)), Approve())
         ),
         Reject(),
     )
-
-    return on_result
 
 
 def get_redemption():
     """reedems winning tokens"""
     token_txn_index = Txn.group_index() - Int(1)
 
-    on_redemption = Seq(
+    return Seq(
         Assert(
             And(
                 validate_token_received(token_txn_index, RESULT),
@@ -159,8 +142,6 @@ def get_redemption():
         ),
         Approve(),
     )
-
-    return on_redemption
 
 
 def approval_program():
@@ -202,7 +183,7 @@ def approval_program():
         Approve(),
     )
 
-    program = Cond(
+    return Cond(
         [Txn.application_id() == Int(0), on_create],
         [Txn.on_completion() == OnComplete.NoOp, on_call],
         [Txn.on_completion() == OnComplete.DeleteApplication, on_delete],
@@ -215,8 +196,6 @@ def approval_program():
             Reject(),
         ],
     )
-
-    return program
 
 
 def clear_program():
